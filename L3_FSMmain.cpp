@@ -5,6 +5,7 @@
 #include "protocol_parameters.h"
 #include "mbed.h"
 
+//가나다라
 //FSM state -------------------------------------------------
 #define L3STATE_IDLE                0
 

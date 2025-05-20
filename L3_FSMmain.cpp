@@ -5,7 +5,6 @@
 #include "protocol_parameters.h"
 #include "mbed.h"
 
-//rse
 //FSM state -------------------------------------------------
 #define L3STATE_IDLE                0
 

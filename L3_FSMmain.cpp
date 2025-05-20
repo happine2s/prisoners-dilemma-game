@@ -6,7 +6,6 @@
 #include "mbed.h"
 
 
-
 //FSM state -------------------------------------------------
 #define L3STATE_IDLE                0
 

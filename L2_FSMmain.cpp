@@ -194,12 +194,23 @@ void L2_FSMrun(void)
                 uint8_t flag_end = L2_msg_checkIfEndData(dataPtr);
 
                 //L3_LLI_dataInd(L2_msg_getWord(dataPtr), srcId, size-L2_MSG_OFFSET_DATA, L2_LLI_getSnr(), L2_LLI_getRssi());
-#ifndef DISABLE_ARQ                
-                if (brflag == 0 && seqNum != L2_msg_getSeq(dataPtr))
+#ifndef DISABLE_ARQ
+            if (brflag)
+            {
+                L2_aggregateData(dataPtr, srcId, size, brflag, flag_end);
+            }
+            else
+            {
+                if (seqNum != L2_msg_getSeq(dataPtr))
+                {
                     debug("[L3][WARNING] Invalid PDU SN (%i) while (%i) is required! discarding it...\n", L2_msg_getSeq(dataPtr), seqNum);
-                else
+                    break; // 💥 여기가 핵심! PDU 무시하고 상태 종료
+                }
+                L2_aggregateData(dataPtr, srcId, size, brflag, flag_end);
+            }
+#else
+            L2_aggregateData(dataPtr, srcId, size, brflag, flag_end);
 #endif
-                    L2_aggregateData(dataPtr, srcId, size, brflag, flag_end);
 
 
 #ifdef DISABLE_ARQ

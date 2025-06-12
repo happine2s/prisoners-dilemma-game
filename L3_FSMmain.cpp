@@ -303,6 +303,21 @@ void L3_FSMrun(void)
 
     case L3STATE_SELECTION: // 협력/배신 선택 상태
     {
+        uint8_t *dataPtr = L3_LLI_getMsgPtr();
+        uint8_t size = L3_LLI_getSize();
+        uint8_t localCopy[1030];
+        memcpy(localCopy, dataPtr, size);
+        localCopy[size] = '\0';
+
+        if (L3_event_checkEventFlag(L3_event_msgRcvd)){
+            if (strcmp((char *)localCopy, "GAME_OVER") == 0)
+            {
+                pc.printf("\n📢 상대방이 형량 1년 이하로 석방되어 게임이 종료되었습니다.\n");
+                main_state = L3STATE_GAME_OVER;
+                return;
+            }
+        }
+
         // 라운드 시작 메시지 출력 (라운드별로 다르게, 한 번만)
         if (!selection_msg_printed)
         {
@@ -354,11 +369,6 @@ void L3_FSMrun(void)
         // 메시지 수신 처리 (상대방의 선택 또는 예측값)
         if (L3_event_checkEventFlag(L3_event_msgRcvd))
         {
-            uint8_t *dataPtr = L3_LLI_getMsgPtr();
-            uint8_t size = L3_LLI_getSize();
-            uint8_t localCopy[1030];
-            memcpy(localCopy, dataPtr, size);
-            localCopy[size] = '\0';
             L3_event_clearEventFlag(L3_event_msgRcvd);
 
             if (strncmp((char *)localCopy, "CHOICE:", 7) == 0) // 상대방의 선택 메시지
@@ -390,13 +400,31 @@ void L3_FSMrun(void)
     }
 
     case L3STATE_CHECKING: // 예측 게임 참여 여부 확인 상태
-    {
+    {   
+
+        uint8_t *dataPtr = L3_LLI_getMsgPtr();
+        uint8_t size = L3_LLI_getSize();
+        uint8_t localCopy[1030];
+        memcpy(localCopy, dataPtr, size);
+        localCopy[size] = '\0';
+
         // 1. 게임 종료 조건 검사 (형량이 1년 미만이면 게임 종료)
         if (sentence < 1.0f)
         {
             pc.printf("\n🎉 당신은 형량이 1년 이하가 되어 석방되었습니다! 게임에서 승리했습니다!\n");
+            strcpy((char *)sdu, "GAME_OVER");
+            L3_LLI_dataReqFunc(sdu, strlen("GAME_OVER"), myDestId);
             main_state = L3STATE_GAME_OVER;
             return; // 게임 종료 시 더 이상 진행하지 않음
+        }
+
+        if (L3_event_checkEventFlag(L3_event_msgRcvd)){
+            if (strcmp((char *)localCopy, "GAME_OVER") == 0)
+            {
+                pc.printf("\n📢 상대방이 형량 1년 이하로 석방되어 게임이 종료되었습니다.\n");
+                main_state = L3STATE_GAME_OVER;
+                return;
+            }
         }
 
         // 2. 예측 게임 진행 여부 프롬프트 및 메시지 수신 처리
@@ -426,11 +454,6 @@ void L3_FSMrun(void)
             // 메시지 수신 처리 (상대방의 예측 게임 Y/N 메시지)
             if (L3_event_checkEventFlag(L3_event_msgRcvd))
             {
-                uint8_t *dataPtr = L3_LLI_getMsgPtr();
-                uint8_t size = L3_LLI_getSize();
-                uint8_t localCopy[1030];
-                memcpy(localCopy, dataPtr, size);
-                localCopy[size] = '\0';
                 L3_event_clearEventFlag(L3_event_msgRcvd);
 
                 if (strcmp((char *)localCopy, "PREDICT_Y") == 0) // 상대방이 Y를 선택
@@ -487,6 +510,21 @@ void L3_FSMrun(void)
 
     case L3STATE_PREDICTION: // 예측값 입력 및 대기 상태
     {
+        uint8_t *dataPtr = L3_LLI_getMsgPtr();
+        uint8_t size = L3_LLI_getSize();
+        uint8_t localCopy[1030];
+        memcpy(localCopy, dataPtr, size);
+        localCopy[size] = '\0';
+        
+        if (L3_event_checkEventFlag(L3_event_msgRcvd)){
+            if (strcmp((char *)localCopy, "GAME_OVER") == 0)
+            {
+                pc.printf("\n📢 상대방이 형량 1년 이하로 석방되어 게임이 종료되었습니다.\n");
+                main_state = L3STATE_GAME_OVER;
+                return;
+            }
+        }
+
         // 예측값 입력 프롬프트 출력 (나의 Y/N 선택에 따라 다르게, 한 번만)
         if (my_prediction_yn_choice == 1 && !prediction_input_prompt_sent) // 내가 'Y'를 선택했고 아직 프롬프트가 안 나왔다면
         {
@@ -519,11 +557,6 @@ void L3_FSMrun(void)
         // 메시지 수신 처리 (상대방의 예측값)
         if (L3_event_checkEventFlag(L3_event_msgRcvd))
         {
-            uint8_t *dataPtr = L3_LLI_getMsgPtr();
-            uint8_t size = L3_LLI_getSize();
-            uint8_t localCopy[1030];
-            memcpy(localCopy, dataPtr, size);
-            localCopy[size] = '\0';
             L3_event_clearEventFlag(L3_event_msgRcvd);
 
             if (strncmp((char *)localCopy, "PREDICTION:", 11) == 0) // 상대방이 예측값을 보냈다면
@@ -546,7 +579,7 @@ void L3_FSMrun(void)
 
         if (my_part_of_prediction_done && peer_part_of_prediction_done) // 나와 상대방 모두 예측 관련 상호작용 완료
         {
-            pc.printf("[System] 모든 예측 게임 상호작용이 완료되었습니다. 다음 라운드로 진행합니다.\n");
+            pc.printf("[System] 예측 게임이 완료되었습니다. 다음 라운드로 진행합니다.\n");
             resetForNextRound();                             // 다음 라운드를 위한 모든 변수 초기화
             main_state = L3STATE_SELECTION;                  // 다음 선택 게임으로 전이
             prediction_input_prompt_sent = false;            // 예측값 입력 프롬프트 플래그 재설정

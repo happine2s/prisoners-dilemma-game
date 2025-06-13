@@ -33,8 +33,10 @@ int main(void){
     L3_initFSM(input_destId);
     
     while(1)
-    {
-        L2_FSMrun();
-        L3_FSMrun();
-    }
+{
+    L3_FSMrun();
+    L2_FSMrun();
+    
+}
+
 }

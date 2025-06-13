@@ -1,4 +1,3 @@
-// 소윤코드
 #include "L3_FSMevent.h"
 #include "L3_msg.h"
 #include "L3_timer.h"
@@ -64,6 +63,7 @@ static uint8_t sdu[1030];
 static Serial pc(USBTX, USBRX);
 static uint8_t myDestId;
 
+
 // 결과 출력 함수
 static void checkAndShowResult()
 {
@@ -117,8 +117,9 @@ static void checkAndShowResult()
                 sentence *= 1.5;                         // 둘 다 조금 증감
 
             pc.printf("\n📣 당신의 형량은 %.1f년입니다.\n", sentence);
-            result_printed = true; // 결과 출력 완료 플래그 설정
+            result_printed = true; // 결과 출력 완료 플래그 설정;
         }
+
     }
 }
 
@@ -236,7 +237,7 @@ void resetForNextRound()
     prediction_input_prompt_sent = false;    // 예측값 입력 프롬프트 다시 출력
     // my_prediction_result_sent_in_this_state는 L3STATE_PREDICTION 상태 내부에서 초기화됩니다.
     my_prediction_result_sent_in_this_state = false;
-    pc.printf("[DEBUG] resetForNextRound() → 전송 플래그 초기화: %d\n", my_prediction_result_sent_in_this_state);
+    // pc.printf("[DEBUG] resetForNextRound() → 전송 플래그 초기화: %d\n", my_prediction_result_sent_in_this_state);
 
     if (my_used_prediction)
         my_prediction_yn_choice = 2;
@@ -284,7 +285,7 @@ void L3_FSMrun(void)
             memcpy(localCopy, dataPtr, size);
             localCopy[size] = '\0';                    // 널 종료 문자 추가
             L3_event_clearEventFlag(L3_event_msgRcvd); // 메시지 수신 플래그 클리어
-            pc.printf("[DEBUG] 메시지 수신: '%s' from ID: %d\n", localCopy, fromId);
+            // pc.printf("[DEBUG] 메시지 수신: '%s' from ID: %d\n", localCopy, fromId);
 
             if (strcmp((char *)localCopy, "READY") == 0)
             {
@@ -399,7 +400,7 @@ void L3_FSMrun(void)
         break;
     }
 
-    case L3STATE_CHECKING: // 예측 게임 참여 여부 확인 상태
+    case L3STATE_CHECKING: // 예측 게임 참여 여부 확인 및 게임 결과 계산 상태
     {   
 
         uint8_t *dataPtr = L3_LLI_getMsgPtr();
@@ -546,7 +547,7 @@ void L3_FSMrun(void)
         // 내가 예측 게임에 'Y'를 선택하고 내 입력이 완료되었다면 상대방에게 내 예측값을 전송
         if (my_prediction_yn_choice == 1 && prediction_input_received && !my_prediction_result_sent_in_this_state)
         {
-            pc.printf("[DEBUG] 입력 완료: %d, 전송됨: %d\n", prediction_input_received, my_prediction_result_sent_in_this_state);
+            // pc.printf("[DEBUG] 입력 완료: %d, 전송됨: %d\n", prediction_input_received, my_prediction_result_sent_in_this_state);
 
             sprintf((char *)sdu, "PREDICTION:%d", prediction_value); // 내 예측값 메시지 생성
             L3_LLI_dataReqFunc(sdu, strlen((char *)sdu), myDestId);  // 상대방에게 전송
